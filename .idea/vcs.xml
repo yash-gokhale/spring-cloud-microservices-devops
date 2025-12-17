@@ -2,8 +2,6 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/com.example.apigateway" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/common-dto" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/maven-demo" vcs="Git" />
   </component>
 </project>
