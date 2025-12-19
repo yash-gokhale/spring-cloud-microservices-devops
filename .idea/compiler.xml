@@ -17,11 +17,11 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="OrderService" options="-parameters" />
-      <module name="PaymentSchedulerService" options="-parameters" />
-      <module name="PaymentService" options="-parameters" />
-      <module name="api-gateway" options="-parameters" />
-      <module name="eureka-server" options="-parameters" />
+      <module name="OrderService" options="" />
+      <module name="PaymentSchedulerService" options="" />
+      <module name="PaymentService" options="" />
+      <module name="api-gateway" options="" />
+      <module name="eureka-server" options="" />
     </option>
   </component>
 </project>
