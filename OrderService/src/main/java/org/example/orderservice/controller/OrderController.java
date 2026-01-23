@@ -1,13 +1,15 @@
 package org.example.orderservice.controller;
 
+import jakarta.persistence.EntityNotFoundException;
+import org.example.common.dto.TopUpRequest;
 import org.example.orderservice.Repository.OrderRepository;
 import org.example.orderservice.model.Order;
 import org.example.orderservice.service.OrderService;
-import org.example.orderservice.service.OrderUpdate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -20,12 +22,18 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
-    @Autowired
-    private OrderUpdate orderUpdate;
-
     @PostMapping
-    public ResponseEntity<Order> createOrder(@RequestBody Order order){
+    public ResponseEntity<String> createOrder(@RequestBody Order order){
         return ResponseEntity.ok(orderService.createOrder(order));
+    }
+
+    @PostMapping("/batch")
+    public List<String> createOrders(@RequestBody List<Order> orders){
+        List<String> ordersMessage = new ArrayList<>();
+         for(Order order: orders){
+             ordersMessage.add(orderService.createOrder(order));
+         }
+         return ordersMessage;
     }
 
     @GetMapping("/{id}")
@@ -39,14 +47,20 @@ public class OrderController {
     }
 
     @PutMapping
-    public ResponseEntity<String> updateOrder(){
-        return ResponseEntity.ok(orderUpdate.updateOrder());
+    public ResponseEntity<String> retryPendingOrder(){
+        return ResponseEntity.ok(orderService.retryPendingOrder());
     }
 
     @DeleteMapping("/{id}")
     public String deleteOrder(@PathVariable("id") long orderId){
-        orderRepository.deleteById(orderId);
+        orderService.deleteOrderById(orderId);
         return "Order deleted by id " + orderId;
+    }
+
+    @DeleteMapping
+    public String deleteOrders() {
+            orderRepository.deleteAll();
+        return "Orders deleted successfully";
     }
 
 

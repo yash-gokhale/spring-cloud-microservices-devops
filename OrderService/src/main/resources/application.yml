@@ -1,0 +1,12 @@
+security:
+  api-key:
+    header: X-INTERNAL-KEY
+    value: gateway-secret-123
+    enabled: true
+
+api-gateway:
+   base-url: http://localhost:9000
+   services:
+     order-service: /orders
+     payment-service: /payments
+     account-service: /accounts

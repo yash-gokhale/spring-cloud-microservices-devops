@@ -2,7 +2,8 @@ package org.example.orderservice.model;
 
 import jakarta.persistence.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 
 @Entity
 @Table(name = "orders")
@@ -30,12 +31,16 @@ public class Order {
 
     private String orderStatus;                           //CREATED / CONFIRMED / CANCELLED
 
-    private LocalDate orderDate;
+    private LocalDateTime orderDate;
+
+    private String customerId;
+
+    private String remarks;
 
 
     public Order(){};
 
-    public Order(String customerName, String customerEmail, long productId, String productName, int quantity, double pricePerUnit, double totalAmount, String paymentStatus, String orderStatus, LocalDate orderDate) {
+    public Order(String customerName, String customerEmail, long productId, String productName, int quantity, double pricePerUnit, double totalAmount, String paymentStatus, String orderStatus, LocalDateTime orderDate, String customerId) {
         this.customerName = customerName;
         this.customerEmail = customerEmail;
         this.productId = productId;
@@ -46,6 +51,7 @@ public class Order {
         this.paymentStatus = paymentStatus;
         this.orderStatus = orderStatus;
         this.orderDate = orderDate;
+        this.customerId = customerId;
     }
 
     public Long getOrderid() {
@@ -128,11 +134,26 @@ public class Order {
         this.orderStatus = orderStatus;
     }
 
-    public LocalDate getOrderDate() {
+    public LocalDateTime getOrderDate() {
         return orderDate;
     }
 
-    public void setOrderDate(LocalDate orderDate) {
+    public void setOrderDate(LocalDateTime orderDate) {
         this.orderDate = orderDate;
+    }
+
+    public String getCustomerId() {
+        return customerId;
+    }
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
     }
 }

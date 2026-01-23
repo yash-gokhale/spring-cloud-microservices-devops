@@ -1,0 +1,36 @@
+#server:
+#  port: 9000
+
+spring:
+  #  application:
+  #    name: api-gateway
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: false
+
+      routes:
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/orders/**
+          filters:
+            - AddRequestHeader=X-INTERNAL-KEY, gateway-secret-123
+
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/payments/**
+
+        - id: account-service
+          uri: lb://account-service
+          predicates:
+            - Path=/accounts/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

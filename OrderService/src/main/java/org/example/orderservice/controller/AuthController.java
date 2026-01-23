@@ -6,6 +6,7 @@ import org.example.orderservice.model.User;
 import org.example.orderservice.security.JwtUtil;
 import org.example.orderservice.service.MyUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
+@ConditionalOnProperty(name = "security.enabled", havingValue = "true")
 public class AuthController {
 
     @Autowired

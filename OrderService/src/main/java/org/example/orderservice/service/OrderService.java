@@ -1,51 +1,103 @@
 package org.example.orderservice.service;
 
+import jakarta.persistence.EntityNotFoundException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.example.common.dto.AccountRequest;
 import org.example.common.dto.PaymentRequest;
 import org.example.common.dto.PaymentResponse;
 import org.example.orderservice.Repository.OrderRepository;
 import org.example.orderservice.model.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
-import java.time.LocalDate;
-
-import static org.example.common.constants.Constants.PAYMENT_SERVICE_URL;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class OrderService {
 
+
+    private static final Logger log = LogManager.getLogger(OrderService.class);
     @Autowired
     private OrderRepository orderRepository;
 
+
     @Autowired
-    private RestTemplate restTemplate;
+    private WebClient webClient;
 
-    public Order createOrder(Order order) {
-        // Business logic for creating an order
+    @Autowired
+    private OrderClient orderClient;
+
+
+    public String createOrder(Order order){
+
+        String message = "";
         double totalAmount = order.getQuantity() * order.getPricePerUnit();
-        order.setTotalAmount(totalAmount);
-        order.setOrderStatus("CREATED");
-        order.setPaymentStatus("PENDING");
-        order.setOrderDate(LocalDate.now());
+        AccountRequest accountRequest = new AccountRequest(order.getCustomerName(), order.getCustomerEmail(), totalAmount);
+        //Boolean isAccountAvailable =  restTemplate.getForObject(orderClient.accountUrl() + "/exists/" + order.getCustomerEmail(), Boolean.class);
+        Boolean isAccountAvailable = webClient.get().uri(orderClient.accountUrl()+ "/exists/" + order.getCustomerEmail()).retrieve().bodyToMono(Boolean.class).block();
+        if(Boolean.FALSE.equals(isAccountAvailable)) {
+             //restTemplate.postForObject(orderClient.accountUrl() + "/create", accountRequest, String.class);
+            webClient.post().uri(orderClient.accountUrl() + "/create").bodyValue(accountRequest).retrieve().toBodilessEntity().block();
+        }
+        
+            order.setTotalAmount(totalAmount);
+            order.setOrderDate(LocalDateTime.now());
+            order.setPaymentStatus("PENDING");
+            order.setOrderStatus("IN_PROGRESS");
+            Order savedOrder = orderRepository.save(order);
 
-        Order savedOrder = orderRepository.save(order);
+            PaymentRequest request = new PaymentRequest(savedOrder.getOrderid(), totalAmount, null, savedOrder.getCustomerEmail());
 
-        PaymentRequest request = new PaymentRequest(savedOrder.getOrderid(), totalAmount, "CREDIT_CARD", savedOrder.getCustomerEmail());
+            try {
+                //PaymentResponse response = restTemplate.postForObject(orderClient.paymentUrl(), request, PaymentResponse.class);
+                PaymentResponse response = webClient.post().uri(orderClient.paymentUrl()).bodyValue(request).retrieve().bodyToMono(PaymentResponse.class).block();
 
-        PaymentResponse response = restTemplate.postForObject(PAYMENT_SERVICE_URL, request, PaymentResponse.class);
+                assert response != null;
+                savedOrder.setCustomerId(response.getCustomerId());
+                savedOrder.setTotalAmount(response.getAmount());
 
-        savedOrder.setPaymentStatus(response.getPaymentStatus());
+                if (response.getPaymentStatus().equals("SUCCESS")) {
+                    savedOrder.setOrderStatus("CONFIRMED");
+                    savedOrder.setRemarks("Order completed. Payment Success.");
+                    savedOrder.setPaymentStatus("SUCCESS");
+                    message = "Order created with ID: " + order.getOrderid() + " and Customer email: " + order.getCustomerEmail();
+                }
+                else {
+                    savedOrder.setRemarks("Recent order is cancelled due to insufficient balance in wallet.");
+                    savedOrder.setPaymentStatus("FAILED");
+                    savedOrder.setOrderStatus("CANCELLED");
+                    message = "Order could not be created due to insufficient balance";
+                }
+            } catch (Exception e) {
+                log.info(e.getMessage());
+            }
+            
+            orderRepository.save(savedOrder);
+        
 
-        if(response.getPaymentStatus().equals("SUCCESS"))
-            savedOrder.setOrderStatus("CONFIRMED");
-        else
-            savedOrder.setOrderStatus("CANCELLED");
+        return message;
+    }
+
+
+    public String retryPendingOrder(){
+
+        List<Order> orders = orderRepository.findByPaymentStatus("PENDING");
+        if(orders.isEmpty())
+            return "No Pending Orders...";
+        return orders.stream().map(this::createOrder).reduce((a,b)->a + b).get();
+        }
 
 
 
+    public void deleteOrderById(long orderId){
+        if (!orderRepository.existsById(orderId)) {
+            throw new EntityNotFoundException("Order not found with id: " + orderId);
+        }
 
-        return orderRepository.save(savedOrder);
+        orderRepository.deleteById(orderId);
     }
 
 }

@@ -11,6 +11,8 @@ public class PaymentResponse {
 
     private String message;
 
+    private String customerId;
+
     public PaymentResponse(){}
 
     public PaymentResponse(long orderId, double amount, String paymentStatus, String transactionId, String message) {
@@ -59,6 +61,14 @@ public class PaymentResponse {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
     }
 }
 
